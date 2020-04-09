@@ -28,20 +28,20 @@ func (ex *Extractor) initAudio() error {
 
 	ctx := ex.audioStream.CodecCtx()
 
-	outputChannels := 1
-	outputSampleFmt := ctx.SampleFmt()
-	outputSampleRate := 16000
+	channels := 1
+	sampleFmt := ctx.SampleFmt()
+	//sampleRate := 16000 // This does not work.
+	sampleRate := ctx.SampleRate()
 
 	options := []*gmf.Option{
-		{"in_channel_layout", ctx.ChannelLayout()},
-
+		{"in_channel_count", ctx.Channels()},
 		{"in_sample_rate", ctx.SampleRate()},
 		{"in_sample_fmt", ctx.SampleFmt()},
-		{"out_channel_layout" , outputChannels},
-		{"out_sample_rate", outputSampleRate  },
-		{"out_sample_fmt", outputSampleFmt},
+		{"out_channel_count" , channels},
+		{"out_sample_rate", sampleRate  },
+		{"out_sample_fmt", sampleFmt},
 	}
-	ex.swrCtx,err = gmf.NewSwrCtx(options,outputChannels,outputSampleFmt)
+	ex.swrCtx,err = gmf.NewSwrCtx(options,channels,sampleFmt)
 
 	if err != nil {
 		return err
@@ -180,9 +180,9 @@ func (ex *Extractor) extractAudio(sender AudioSender, proc *AudioProcessor) {
 
 			b := frame.GetRawAudioData(0)
 
-			fmt.Printf("size of audio buf %d using %d bytes only\n", len(b) , frame.NbSamples() * 2)
+			fmt.Printf("size of audio buf %d \n", len(b) )
 			ts := float64(time.Now().UnixNano()) / float64(1000000000)
-			aud := &extractedAudio{ b[:(frame.NbSamples() * 2)],ts}
+			aud := &extractedAudio{ b,ts}
 			sender.SendAudio(aud)
 
 		}
